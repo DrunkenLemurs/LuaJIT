@@ -11,14 +11,21 @@
 @rem   static   static linkage
 
 @if not defined INCLUDE goto :FAIL
+@if not defined LJCOMPILE set LJCOMPILE=cl
+@if not defined LJLINK set LJLINK=link
+@if not defined LJMT set LJMT=mt
+@if not defined LJLIB set LJLIB=lib
 
 @setlocal
-@rem Add more debug flags here, e.g. DEBUGCFLAGS=/DLUA_USE_APICHECK
-@set DEBUGCFLAGS=
-@set LJCOMPILE=cl /nologo /c /O2 /W3 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_STDIO_INLINE=__declspec(dllexport)__inline
-@set LJLINK=link /nologo
-@set LJMT=mt /nologo
-@set LJLIB=lib /nologo /nodefaultlib
+@rem Add more debug flags here, e.g. DBGCFLAGS=/DLUA_USE_APICHECK
+@if not defined INICFLAGS set INICFLAGS=/nologo
+@if not defined OPTCFLAGS set OPTCFLAGS=/O2
+@if not defined DEFCFLAGS set DEFCFLAGS=
+@if not defined DBGCFLAGS set DBGCFLAGS=/Z7
+@set LJCOMPILE="%LJCOMPILE%" %INICFLAGS% /c %OPTCFLAGS% /W4 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_STDIO_INLINE=__declspec(dllexport)__inline %DEFCFLAGS%
+@set LJLINK="%LJLINK%" /nologo
+@set LJMT="%LJMT%" /nologo
+@set LJLIB="%LJLIB%" /nologo /nodefaultlib
 @set DASMDIR=..\dynasm
 @set DASM=%DASMDIR%\dynasm.lua
 @set DASC=vm_x64.dasc
@@ -31,8 +38,9 @@
 @if errorlevel 1 goto :BAD
 %LJLINK% /out:minilua.exe minilua.obj
 @if errorlevel 1 goto :BAD
-if exist minilua.exe.manifest^
-  %LJMT% -manifest minilua.exe.manifest -outputresource:minilua.exe
+@if not exist minilua.exe.manifest goto :NOMINILUAMANIFEST
+%LJMT% -manifest minilua.exe.manifest -outputresource:minilua.exe
+:NOMINILUAMANIFEST
 
 @set DASMFLAGS=-D WIN -D JIT -D FFI -D P64
 @set LJARCH=x64
@@ -55,8 +63,9 @@ minilua %DASM% -LN %DASMFLAGS% -o host\buildvm_arch.h %DASC%
 @if errorlevel 1 goto :BAD
 %LJLINK% /out:buildvm.exe buildvm*.obj
 @if errorlevel 1 goto :BAD
-if exist buildvm.exe.manifest^
-  %LJMT% -manifest buildvm.exe.manifest -outputresource:buildvm.exe
+@if not exist buildvm.exe.manifest goto :NOBUILDVMMANIFEST
+%LJMT% -manifest buildvm.exe.manifest -outputresource:buildvm.exe
+:NOBUILDVMMANIFEST
 
 buildvm -m peobj -o lj_vm.obj
 @if errorlevel 1 goto :BAD
@@ -73,16 +82,18 @@ buildvm -m vmdef -o jit\vmdef.lua %ALL_LIB%
 buildvm -m folddef -o lj_folddef.h lj_opt_fold.c
 @if errorlevel 1 goto :BAD
 
+@set BUILDRUNTIME=D
 @if "%1" neq "debug" goto :NODEBUG
 @shift
 @set BUILDTYPE=debug
-@set LJCOMPILE=%LJCOMPILE% /Zi %DEBUGCFLAGS%
+@set BUILDRUNTIME=%BUILDRUNTIME%d
+@set LJCOMPILE=%LJCOMPILE% %DBGCFLAGS%
 @set LJLINK=%LJLINK% /opt:ref /opt:icf /incremental:no
-:NODEBUG
 @set LJLINK=%LJLINK% /%BUILDTYPE%
+:NODEBUG
 @if "%1"=="amalg" goto :AMALGDLL
 @if "%1"=="static" goto :STATIC
-%LJCOMPILE% /MD /DLUA_BUILD_AS_DLL lj_*.c lib_*.c
+%LJCOMPILE% /M%BUILDRUNTIME% /DLUA_BUILD_AS_DLL lj_*.c lib_*.c
 @if errorlevel 1 goto :BAD
 %LJLINK% /DLL /out:%LJDLLNAME% lj_*.obj lib_*.obj
 @if errorlevel 1 goto :BAD
@@ -94,20 +105,22 @@ buildvm -m folddef -o lj_folddef.h lj_opt_fold.c
 @if errorlevel 1 goto :BAD
 @goto :MTDLL
 :AMALGDLL
-%LJCOMPILE% /MD /DLUA_BUILD_AS_DLL ljamalg.c
+%LJCOMPILE% /M%BUILDRUNTIME% /DLUA_BUILD_AS_DLL ljamalg.c
 @if errorlevel 1 goto :BAD
 %LJLINK% /DLL /out:%LJDLLNAME% ljamalg.obj lj_vm.obj
 @if errorlevel 1 goto :BAD
 :MTDLL
-if exist %LJDLLNAME%.manifest^
-  %LJMT% -manifest %LJDLLNAME%.manifest -outputresource:%LJDLLNAME%;2
+@if not exist %LJDLLNAME%.manifest goto :NODLLMANIFEST
+%LJMT% -manifest %LJDLLNAME%.manifest -outputresource:%LJDLLNAME%;2
+:NODLLMANIFEST
 
 %LJCOMPILE% luajit.c
 @if errorlevel 1 goto :BAD
 %LJLINK% /out:luajit.exe luajit.obj %LJLIBNAME%
 @if errorlevel 1 goto :BAD
-if exist luajit.exe.manifest^
-  %LJMT% -manifest luajit.exe.manifest -outputresource:luajit.exe
+@if not exist luajit.exe.manifest goto :NOLUAJITMANIFEST
+%LJMT% -manifest luajit.exe.manifest -outputresource:luajit.exe
+:NOLUAJITMANIFEST
 
 @del *.obj *.manifest minilua.exe buildvm.exe
 @del host\buildvm_arch.h
