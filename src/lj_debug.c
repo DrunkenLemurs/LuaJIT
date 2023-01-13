@@ -688,7 +688,7 @@ LUALIB_API void luaL_traceback (lua_State *L, lua_State *L1, const char *msg,
       lua_pushfstring(L, "\n\t%s:", ar.short_src);
     if (ar.currentline > 0)
       lua_pushfstring(L, "%d:", ar.currentline);
-    if (*ar.namewhat) {
+    if (*ar.namewhat && ar.name && *ar.name) {
       lua_pushfstring(L, " in function " LUA_QS, ar.name);
     } else {
       if (*ar.what == 'm') {
