@@ -262,8 +262,7 @@ LJLIB_CF(select)		LJLIB_REC(.)
 
 LJLIB_ASM(tonumber)		LJLIB_REC(.)
 {
-  int32_t base = lj_lib_optint(L, 2, 10);
-  if (base == 10) {
+  if (L->base+1 >= L->top || tvisnil(L->base+1)) { /* no base */
     TValue *o = lj_lib_checkany(L, 1);
     if (lj_strscan_numberobj(o)) {
       copyTV(L, L->base-1-LJ_FR2, o);
@@ -289,6 +288,7 @@ LJLIB_ASM(tonumber)		LJLIB_REC(.)
     }
 #endif
   } else {
+    int32_t base = lj_lib_checkint(L, 2);
     const char *p = strdata(lj_lib_checkstr(L, 1));
     char *ep;
     unsigned int neg = 0;
