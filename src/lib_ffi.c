@@ -349,7 +349,7 @@ LJLIB_CF(ffi_meta___ipairs)
   return ffi_pairs(L, MM_ipairs);
 }
 
-LJLIB_PUSH("ffi") LJLIB_SET(__metatable)
+LJLIB_PUSH("cdata") LJLIB_SET(__metatable)
 
 #include "lj_libdef.h"
 
