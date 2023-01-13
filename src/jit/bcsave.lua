@@ -405,7 +405,7 @@ typedef struct {
   o.sym1.naux = 1
   o.sym1aux.size = f32(#s)
   o.sym2.sect = f16(2)
-  o.sym2.scl = 2
+  o.sym2.scl = 3
   o.sym2.nameref[1] = f32(4)
   o.sym3.sect = f16(-1)
   o.sym3.scl = 2
