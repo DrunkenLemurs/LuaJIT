@@ -370,7 +370,8 @@ TRef LJ_FASTCALL lj_opt_dse_ahstore(jit_State *J)
 	** since they are followed by at least one guarded VLOAD.
 	*/
 	for (ir = IR(J->cur.nins-1); ir > store; ir--)
-	  if (irt_isguard(ir->t) || ir->o == IR_ALEN)
+	  if (irt_isguard(ir->t) || ir->o == IR_ALEN || 
+	      (ir->o == IR_CALLS && ir->op2 == IRCALL_lj_tab_dup))
 	    goto doemit;  /* No elimination possible. */
 	/* Remove redundant store from chain and replace with NOP. */
 	*refp = store->prev;
