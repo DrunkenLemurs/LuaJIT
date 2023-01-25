@@ -416,7 +416,7 @@ static int lj_cf_package_loader_preload(lua_State *L)
   lua_getfield(L, -1, name);
   if (lua_isnil(L, -1)) {  /* Not found? */
     const char *bcname = mksymname(L, name, SYMPREFIX_BC);
-    const char *chunkname = mksymname(L, name, "=[BC %s]");
+    const char *chunkname = lua_pushfstring(L, "=[BC %s]", name);
     const char *bcdata = ll_bcsym(NULL, bcname);
     if (bcdata == NULL || luaL_loadbuffer(L, bcdata, ~(size_t)0, chunkname) != 0)
       lua_pushfstring(L, "\n\tno field package.preload['%s']", name);
