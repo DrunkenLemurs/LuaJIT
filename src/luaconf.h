@@ -18,12 +18,12 @@
 ** In Windows, any exclamation mark ('!') in the path is replaced by the
 ** path of the directory of the executable file of the current process.
 */
-#define LUA_LDIR	"!\\lua\\"
-#define LUA_CDIR	"!\\"
+#define LUA_LDIR	"!/lua/"
+#define LUA_CDIR	"!/"
 #define LUA_PATH_DEFAULT \
-  ".\\?.lua;" LUA_LDIR"?.lua;" LUA_LDIR"?\\init.lua;"
+  LUA_LDIR"?.lua;" LUA_LDIR"?/init.lua;"
 #define LUA_CPATH_DEFAULT \
-  ".\\?.dll;" LUA_CDIR"?.dll;" LUA_CDIR"loadall.dll"
+  LUA_CDIR"?.dll;" LUA_CDIR"loadall.dll"
 #else
 /*
 ** Note to distribution maintainers: do NOT patch the following lines!
@@ -68,15 +68,11 @@
 #define LUA_INIT	"LUA_INIT"
 
 /* Special file system characters. */
-#if defined(_WIN32)
-#define LUA_DIRSEP	"\\"
-#else
 #define LUA_DIRSEP	"/"
-#endif
 #define LUA_PATHSEP	";"
 #define LUA_PATH_MARK	"?"
 #define LUA_EXECDIR	"!"
-#define LUA_IGMARK	"-"
+#define LUA_IGMARK	"-"     /* Mark to ignore all BEFORE it when building a luaopen_ function name or a luaJIT_BC_ symbol name */
 #define LUA_PATH_CONFIG \
   LUA_DIRSEP "\n" LUA_PATHSEP "\n" LUA_PATH_MARK "\n" \
   LUA_EXECDIR "\n" LUA_IGMARK "\n"

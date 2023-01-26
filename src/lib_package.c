@@ -102,8 +102,10 @@ static void setprogdir(lua_State *L)
     luaL_error(L, "unable to get ModuleFileName");
   } else {
     *lb = '\0';
-    luaL_gsub(L, lua_tostring(L, -1), LUA_EXECDIR, buff);
+    const char* path = luaL_gsub(L, lua_tostring(L, -1), LUA_EXECDIR, buff);
     lua_remove(L, -2);  /* remove original string */
+    luaL_gsub(L, path, "\\", LUA_DIRSEP);
+    lua_remove(L, -2);
   }
 }
 
@@ -562,8 +564,13 @@ static void setpath(lua_State *L, const char *fieldname, const char *envname,
   } else {
     path = luaL_gsub(L, path, LUA_PATHSEP LUA_PATHSEP,
 			      LUA_PATHSEP AUXMARK LUA_PATHSEP);
-    luaL_gsub(L, path, AUXMARK, def);
+    path = luaL_gsub(L, path, AUXMARK, def);
     lua_remove(L, -2);
+#if LJ_TARGET_WINDOWS    
+    /* setprogdir() might fail so we have to replace backslashes here AND there */
+    luaL_gsub(L, path, "\\", LUA_DIRSEP); 
+    lua_remove(L, -2); /* remove original string */
+#endif    
   }
   setprogdir(L);
   lua_setfield(L, -2, fieldname);
