@@ -21,7 +21,7 @@
 #define LUA_LDIR	"!/lua/"
 #define LUA_CDIR	"!/"
 #define LUA_PATH_DEFAULT \
-  LUA_LDIR"?.lua;" LUA_LDIR"?/init.lua;"
+  LUA_LDIR"?.lua;" LUA_LDIR"?/init.lua"
 #define LUA_CPATH_DEFAULT \
   LUA_CDIR"?.dll;" LUA_CDIR"loadall.dll"
 #else
@@ -50,16 +50,28 @@
 #define LUA_RLPATH
 #define LUA_RCPATH
 #endif
+/*
+** On POSIX, any exclamation mark ('!') in the path is replaced by the
+** path of the directory of the executable file of the current process. 
+** Tf that path ends in "/bin", the trailing bin folder is also omitted.
+*/
+#define LUA_XROOT "!"
 
-#define LUA_JPATH	";" LUA_JROOT "/share" LUA_LJDIR "?.lua"
+#define LUA_JPATH \
+  LUA_XROOT "/share" LUA_LJDIR "?.lua;" \
+  LUA_XROOT "/share" LUA_LJDIR "?/init.lua;" \
+  LUA_JROOT "/share" LUA_LJDIR "?.lua;" \
+  LUA_JROOT "/share" LUA_LJDIR "?/init.lua"
 #define LUA_LLDIR	LUA_LROOT "/share" LUA_LUADIR
 #define LUA_LCDIR	LUA_LROOT "/" LUA_LMULTILIB LUA_LUADIR
+#define LUA_XCDIR	LUA_XROOT "/" LUA_LMULTILIB LUA_LUADIR
 #define LUA_LLPATH	";" LUA_LLDIR "?.lua;" LUA_LLDIR "?/init.lua"
+#define LUA_LCPATH0	";" LUA_XCDIR "?.so"
 #define LUA_LCPATH1	";" LUA_LCDIR "?.so"
 #define LUA_LCPATH2	";" LUA_LCDIR "loadall.so"
 
-#define LUA_PATH_DEFAULT	"./?.lua" LUA_JPATH LUA_LLPATH LUA_RLPATH
-#define LUA_CPATH_DEFAULT	"./?.so" LUA_LCPATH1 LUA_RCPATH LUA_LCPATH2
+#define LUA_PATH_DEFAULT	LUA_JPATH LUA_LLPATH LUA_RLPATH
+#define LUA_CPATH_DEFAULT	LUA_LCPATH0 LUA_LCPATH1 LUA_RCPATH LUA_LCPATH2
 #endif
 
 /* Environment variable names for path overrides and initialization code. */

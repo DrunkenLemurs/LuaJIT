@@ -65,6 +65,77 @@ static const char *ll_bcsym(void *lib, const char *sym)
   return (const char *)dlsym(lib, sym);
 }
 
+#undef setprogdir
+
+#if LJ_TARGET_OSX || LJ_TARGET_LJ_TARGET_IOS 
+static void setprogdir(lua_State *L)
+{
+  char rawpath[PATH_MAX + 1];
+  uint32_t nsize = (uint32_t)sizeof(rawpath);
+  int n = _NSGetExecutablePath(rawpath, &nsize);
+  if (n >= 0 && nsize > 0 ) {
+    char buff[PATH_MAX + 1];
+    if (realpath(rawpath, buff) == buff) {
+      char *lb;
+      if ((lb = strrchr(buff, '/')) != NULL) {
+        *lb = '\0'; /* discard executable name */
+        if ((lb = strrchr(buff, '/')) != NULL) {
+          if (strcmp(lb, "/bin") == 0) {
+            *lb = '\0'; /* discard trailing bin dir */
+          }
+        } 
+        const char* path = luaL_gsub(L, lua_tostring(L, -1), LUA_EXECDIR, buff);
+        lua_remove(L, -2);  /* remove original string */
+        return;
+      }
+    }
+  }
+  /* if all fails */  
+  luaL_error(L, "unable to get ModuleFileName");
+}
+#else
+static void setprogdir(lua_State *L)
+{
+  static const char* candidate[] = {
+    "/proc/self/exe",    /* Linux, Android */
+    "/proc/curproc/exe", /* NetBSD */
+    "/proc/curproc/file" /* FreeBSD, DragonFly */
+  }; 
+  const char* proc = NULL;
+  for(size_t i = 0; i < (sizeof(candidate)/sizeof(candidate[0])); ++i) {
+    if (access(candidate[i], F_OK) == 0) {
+      proc = candidate[i];
+      break;
+    }
+  }
+  if (proc != NULL) {
+    char rawpath[PATH_MAX + 1];
+    const size_t nsize = sizeof(rawpath);
+    ssize_t n = readlink(proc, rawpath, nsize);
+    if (n > 0 && n < nsize) {
+      rawpath[n] = '\0'; /* readlink() does not append a terminating null byte to buff */
+      char buff[PATH_MAX + 1];
+      if (realpath(rawpath, buff) == buff) {
+        char *lb;
+        if ((lb = strrchr(buff, '/')) != NULL) {
+          *lb = '\0'; /* discard executable name */
+          if ((lb = strrchr(buff, '/')) != NULL) {
+            if (strcmp(lb, "/bin") == 0) {
+              *lb = '\0'; /* discard trailing bin dir */
+            }
+          } 
+          const char* path = luaL_gsub(L, lua_tostring(L, -1), LUA_EXECDIR, buff);
+          lua_remove(L, -2);  /* remove original string */
+          return;
+        }
+      }  
+    }  
+  }
+  /* if all fails */  
+  luaL_error(L, "unable to get ModuleFileName");
+}
+#endif
+
 #elif LJ_TARGET_WINDOWS
 
 #define WIN32_LEAN_AND_MEAN
@@ -101,7 +172,7 @@ static void setprogdir(lua_State *L)
   if (n == 0 || n == nsize || (lb = strrchr(buff, '\\')) == NULL) {
     luaL_error(L, "unable to get ModuleFileName");
   } else {
-    *lb = '\0';
+    *lb = '\0'; /* discard executable name */
     const char* path = luaL_gsub(L, lua_tostring(L, -1), LUA_EXECDIR, buff);
     lua_remove(L, -2);  /* remove original string */
     luaL_gsub(L, path, "\\", LUA_DIRSEP);
