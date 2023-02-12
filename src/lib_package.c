@@ -124,7 +124,7 @@ static void setprogdir(lua_State *L)
               *lb = '\0'; /* discard trailing bin dir */
             }
           } 
-          const char* path = luaL_gsub(L, lua_tostring(L, -1), LUA_EXECDIR, buff);
+          luaL_gsub(L, lua_tostring(L, -1), LUA_EXECDIR, buff);
           lua_remove(L, -2);  /* remove original string */
           return;
         }
