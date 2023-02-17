@@ -538,7 +538,7 @@ LJLIB_CF(print)
       L->top--;
     }
     if (i)
-      putchar('\t');
+      putchar(' ');
     fwrite(str, 1, size, stdout);
   }
   putchar('\n');
