@@ -38,6 +38,21 @@ int32_t LJ_FASTCALL lj_str_cmp(GCstr *a, GCstr *b)
   return (int32_t)(a->len - b->len);
 }
 
+int32_t LJ_FASTCALL lj_str_casecmp(GCstr *a, GCstr *b)
+{
+  MSize i, n = a->len > b->len ? b->len : a->len;
+  int32_t r = 0;
+  for (i = 0; (i < n) && (r == 0); ++i)
+  {
+    char ca = *(strdata(a) + i);
+    ca += ((ca >= 'A' && ca <= 'Z') << 5);
+    char cb = *(strdata(b) + i);
+    cb += ((cb >= 'A' && cb <= 'Z') << 5);
+    r = (ca > cb) - (ca < cb);
+  }      
+  return (r - (a->len < b->len)) | (a->len != b->len);
+}
+
 /* Find fixed string p inside string s. */
 const char *lj_str_find(const char *s, const char *p, MSize slen, MSize plen)
 {

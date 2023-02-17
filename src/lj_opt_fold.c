@@ -558,6 +558,18 @@ LJFOLDF(kfold_strcmp)
   return NEXTFOLD;
 }
 
+LJFOLD(CALLN CARG IRCALL_lj_str_casecmp)
+LJFOLDF(kfold_strcasecmp)
+{
+  if (irref_isk(fleft->op1) && irref_isk(fleft->op2)) {
+    GCstr *a = ir_kstr(IR(fleft->op1));
+    GCstr *b = ir_kstr(IR(fleft->op2));
+    return INTFOLD(lj_str_casecmp(a, b));
+  }
+  return NEXTFOLD;
+}
+
+
 /* -- Constant folding and forwarding for buffers ------------------------- */
 
 /*

@@ -655,6 +655,67 @@ LJLIB_CF(string_format)		LJLIB_REC(.)
 
 /* ------------------------------------------------------------------------ */
 
+static int str_cmp_aux(lua_State* L, int casesensitive)
+{
+  GCstr *a = lj_lib_checkstr(L, 1);
+  GCstr *b = lj_lib_checkstr(L, 2);
+  MSize i, n = a->len > b->len ? b->len : a->len;
+  int32_t r = 0;
+  if (casesensitive) {
+    for (i = 0; (i < n) && (r == 0); ++i) {
+      const char ca = *(strdata(a) + i);
+      const char cb = *(strdata(b) + i);
+      r = (ca > cb) - (ca < cb);  
+    }
+  } else {
+    for (i = 0; (i < n) && (r == 0); ++i) {
+      char ca = *(strdata(a) + i);
+      ca += ((ca >= 'A' && ca <= 'Z') << 5);
+      char cb = *(strdata(b) + i);
+      cb += ((cb >= 'A' && cb <= 'Z') << 5);
+      r = (ca > cb) - (ca < cb);
+    }
+  }
+  /* Return value must be adjusted depending on whether a->len and b->len
+   *  r   a->len OP b->len   return (r - (a->len < b->len)) | (a->len != b->len)   
+   * --------------------------------------------------------------------------     
+   * -1          =           (-1 - 0) | 0 = -1
+   * -1          <           (-1 - 1) | 1 = -1
+   * -1          >           (-1 - 0) | 1 = -1
+   *  0          =           ( 0 - 0) | 0 =  0 
+   *  0          <           ( 0 - 1) | 1 = -1
+   *  0          >           ( 0 - 0) | 1 =  1
+   *  1          =           ( 1 - 0) | 0 =  1
+   *  1          <           ( 1 - 1) | 1 =  1
+   *  1          >           ( 1 - 0) | 1 =  1
+   * */
+  setintV(L->top-1, (r - (a->len < b->len)) | (a->len != b->len));
+  return 1;
+}
+
+LJLIB_CF(string_cmp)  LJLIB_REC(.)
+{
+  return str_cmp_aux(L, 1);
+}
+
+LJLIB_CF(string_casecmp)  LJLIB_REC(.)
+{
+  return str_cmp_aux(L, 0);
+}
+
+/* ------------------------------------------------------------------------ */
+
+LJLIB_CF(string_collcmp)
+{
+  GCstr *a = lj_lib_checkstr(L, 1);
+  GCstr *b = lj_lib_checkstr(L, 2);
+  const int32_t r = strcoll(strdata(a), strdata(b));
+  setintV(L->top-1, ((r > 0) - (r < 0)));
+  return 1;
+}
+
+/* ------------------------------------------------------------------------ */
+
 #include "lj_libdef.h"
 
 LUALIB_API int luaopen_string(lua_State *L)

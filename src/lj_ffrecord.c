@@ -1082,6 +1082,24 @@ static void LJ_FASTCALL recff_string_format(jit_State *J, RecordFFData *rd)
   recff_format(J, rd, recff_bufhdr(J), 0);
 }
 
+static void LJ_FASTCALL recff_string_cmp(jit_State *J, RecordFFData *rd) 
+{
+  TRef a = lj_ir_tostr(J, J->base[0]);
+  TRef b = lj_ir_tostr(J, J->base[1]);
+  TRef tr = lj_ir_call(J, IRCALL_lj_str_cmp, a, b);
+  J->base[0] = tr;
+  UNUSED(rd);
+}
+
+static void LJ_FASTCALL recff_string_casecmp(jit_State *J, RecordFFData *rd) 
+{
+  TRef a = lj_ir_tostr(J, J->base[0]);
+  TRef b = lj_ir_tostr(J, J->base[1]);
+  TRef tr = lj_ir_call(J, IRCALL_lj_str_casecmp, a, b);
+  J->base[0] = tr;
+  UNUSED(rd);
+}
+
 /* -- Buffer library fast functions --------------------------------------- */
 
 #if LJ_HASBUFFER
