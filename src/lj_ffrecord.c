@@ -1100,6 +1100,55 @@ static void LJ_FASTCALL recff_string_casecmp(jit_State *J, RecordFFData *rd)
   UNUSED(rd);
 }
 
+static void LJ_FASTCALL recff_string_startswith(jit_State *J, RecordFFData *rd)
+{
+  TRef trstr = lj_ir_tostr(J, J->base[0]);
+  TRef trpat = lj_ir_tostr(J, J->base[1]);
+  TRef trlen = emitir(IRTI(IR_FLOAD), trstr, IRFL_STR_LEN);
+  TRef tr0 = lj_ir_kint(J, 0);
+  TRef trstart;
+  GCstr *str = argv2str(J, &rd->argv[0]);
+  GCstr *pat = argv2str(J, &rd->argv[1]);
+  int32_t start;
+  J->needsnap = 1;
+  if (tref_isnil(J->base[2])) {
+    trstart = lj_ir_kint(J, 1);
+    start = 1;
+  } else {
+    trstart = lj_opt_narrow_toint(J, J->base[2]);
+    start = argv2int(J, &rd->argv[2]);
+  }
+  trstart = recff_string_start(J, str, &start, trstart, trlen, tr0);
+  if ((MSize)start <= str->len) {
+    emitir(IRTGI(IR_ULE), trstart, trlen);
+  } else {
+    emitir(IRTGI(IR_UGT), trstart, trlen);
+    J->base[0] = TREF_FALSE;
+    return;
+  }
+  TRef trslen = emitir(IRTI(IR_SUB), trlen, trstart);
+  TRef trplen = emitir(IRTI(IR_FLOAD), trpat, IRFL_STR_LEN);
+  if (pat->len <= (str->len - (MSize)start)) {
+    emitir(IRTGI(IR_ULE), trplen, trslen);
+  } else {
+    emitir(IRTGI(IR_UGT), trplen, trslen);
+    J->base[0] = TREF_FALSE;
+    return;
+  } 
+  TRef trsptr = emitir(IRT(IR_STRREF, IRT_PGC), trstr, trstart);
+  TRef trpptr = emitir(IRT(IR_STRREF, IRT_PGC), trpat, tr0);
+  TRef tr = lj_ir_call(J, IRCALL_lj_str_find, trsptr, trpptr, trslen, trplen);
+  TRef trp0 = lj_ir_kkptr(J, NULL);
+  if (lj_str_find(strdata(str)+(MSize)start, strdata(pat),
+	    pat->len, pat->len)) {
+    emitir(IRTG(IR_NE, IRT_PGC), tr, trp0);
+    J->base[0] = TREF_TRUE;
+  } else {
+    emitir(IRTG(IR_EQ, IRT_PGC), tr, trp0);
+    J->base[0] = TREF_FALSE;
+  }
+}
+
 /* -- Buffer library fast functions --------------------------------------- */
 
 #if LJ_HASBUFFER

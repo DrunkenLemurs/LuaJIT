@@ -716,6 +716,25 @@ LJLIB_CF(string_collcmp)
 
 /* ------------------------------------------------------------------------ */
 
+LJLIB_CF(string_startswith)  LJLIB_REC(.)
+{
+  GCstr *a = lj_lib_checkstr(L, 1);
+  GCstr *b = lj_lib_checkstr(L, 2);
+  int32_t start = lj_lib_optint(L, 3, 1); 
+  MSize st;
+  if (start < 0) start += (int32_t)a->len; else start--;
+  if (start < 0) start = 0;
+  st = (MSize)start;
+  if (st > a->len || (a->len - st) < b->len) {
+    setboolV(L->top-1, 0);  
+  } else {
+    setboolV(L->top - 1, lj_str_find(strdata(a) + st, strdata(b), b->len, b->len) != NULL);
+  }
+  return 1;
+}
+
+/* ------------------------------------------------------------------------ */
+
 #include "lj_libdef.h"
 
 LUALIB_API int luaopen_string(lua_State *L)
