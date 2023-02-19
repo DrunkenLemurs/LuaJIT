@@ -716,3 +716,27 @@ int LJ_FASTCALL lj_tab_empty(const GCtab *t)
 
   return 1;
 }
+
+int LJ_FASTCALL lj_tab_isarray(const GCtab *src)
+{
+  Node* node;
+  cTValue* o;
+  ptrdiff_t i;
+
+  node = noderef(src->node);
+  for (i = (ptrdiff_t)src->hmask; i >= 0; --i) {
+    if (!tvisnil(&node[i].val)) {
+      o = &node[i].key;
+      if (LJ_UNLIKELY(tvisint(o))) continue;
+      if (LJ_LIKELY(!tvisnum(o))) return 0;
+      const lua_Number n = numberVnum(o);
+      /* simply checking `rint(n) == n` does not work with 
+       * NaN,+inf,-inf or numbers out of int32 range */
+      if (LJ_UNLIKELY(n < INT_MIN)
+        || LJ_UNLIKELY(n > INT_MAX)
+        || LJ_UNLIKELY(lj_num2int(n) != n))
+        return 0;
+    }
+  }
+  return 1;
+}

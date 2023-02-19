@@ -190,6 +190,20 @@ LJLIB_NOREG LJLIB_CF(table_dup) LJLIB_REC(.)
   return 1;
 }
 
+LJLIB_NOREG LJLIB_CF(table_type)
+{
+  cTValue *o = lj_lib_checkany(L, 1);
+  if (!tvistab(o)) {
+    setnilV(L->top++);
+  } else if (lj_tab_isarray(tabV(o))) {
+    lua_pushliteral(L, "array");
+  } else {
+    lua_pushliteral(L, "dict");
+  } 
+  return 1;
+}
+
+
 /* ------------------------------------------------------------------------ */
 
 static void set2(lua_State *L, int i, int j)
@@ -340,6 +354,11 @@ static int luaopen_table_dup(lua_State *L)
   return lj_lib_postreg(L, lj_cf_table_dup, FF_table_dup, "dup");
 }
 
+static int luaopen_table_type(lua_State *L)
+{
+  return lj_lib_postreg(L, lj_cf_table_type, FF_table_type, "type");
+}
+
 /* ------------------------------------------------------------------------ */
 
 #include "lj_libdef.h"
@@ -355,6 +374,7 @@ LUALIB_API int luaopen_table(lua_State *L)
   lj_lib_prereg(L, LUA_TABLIBNAME ".clear", luaopen_table_clear, tabV(L->top-1));
   lj_lib_prereg(L, LUA_TABLIBNAME ".empty", luaopen_table_empty, tabV(L->top-1));  
   lj_lib_prereg(L, LUA_TABLIBNAME ".dup", luaopen_table_dup, tabV(L->top-1));
+  lj_lib_prereg(L, LUA_TABLIBNAME ".type", luaopen_table_type, tabV(L->top-1));
   return 1;
 }
 
