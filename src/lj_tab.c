@@ -691,7 +691,7 @@ MSize LJ_FASTCALL lj_tab_len_hint(GCtab *t, size_t hint)
 }
 #endif
 
-int LJ_FASTCALL lj_tab_isempty(const GCtab *t)
+int LJ_FASTCALL lj_tab_empty(const GCtab *t)
 {
   MSize narr = (MSize)t->asize;
   cTValue *e;

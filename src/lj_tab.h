@@ -92,5 +92,5 @@ LJ_FUNCA MSize LJ_FASTCALL lj_tab_len(GCtab *t);
 #if LJ_HASJIT
 LJ_FUNC MSize LJ_FASTCALL lj_tab_len_hint(GCtab *t, size_t hint);
 #endif
-LJ_FUNCA int LJ_FASTCALL lj_tab_isempty(const GCtab *t);
+LJ_FUNCA int LJ_FASTCALL lj_tab_empty(const GCtab *t);
 #endif

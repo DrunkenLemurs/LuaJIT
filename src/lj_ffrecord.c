@@ -1544,16 +1544,20 @@ static void LJ_FASTCALL recff_table_clear(jit_State *J, RecordFFData *rd)
   }  /* else: Interpreter will throw. */
 }
 
-static void LJ_FASTCALL recff_table_isempty(jit_State *J, RecordFFData *rd)
+static void LJ_FASTCALL recff_table_empty(jit_State *J, RecordFFData *rd)
 {
   TRef src = J->base[0];
   if (LJ_LIKELY(tref_istab(src))) {
-    TRef trres = lj_ir_call(J, IRCALL_lj_tab_isempty, src);
+    TRef trres = lj_ir_call(J, IRCALL_lj_tab_empty, src);
     GCtab *t = tabV(&rd->argv[0]);
-    int isempty = lj_tab_isempty(t);
     TRef tr0 = lj_ir_kint(J, 0);
-    emitir(isempty ? IRTGI(IR_NE) : IRTGI(IR_EQ), trres, tr0);
-    J->base[0] = isempty ? TREF_TRUE : TREF_FALSE;
+    if (lj_tab_empty(t)) {
+      emitir(IRTGI(IR_NE), trres, tr0);
+      J->base[0] = TREF_TRUE;
+    } else {
+      emitir(IRTGI(IR_EQ), trres, tr0);
+      J->base[0] = TREF_FALSE;
+    }
   }  /* else: Interpreter will throw. */
 }
 
