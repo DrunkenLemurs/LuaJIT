@@ -34,6 +34,7 @@
 
 #if LJ_TARGET_DLOPEN
 
+#include <unistd.h>
 #include <dlfcn.h>
 
 static void ll_unloadlib(void *lib)
