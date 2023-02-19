@@ -1100,51 +1100,69 @@ static void LJ_FASTCALL recff_string_casecmp(jit_State *J, RecordFFData *rd)
   UNUSED(rd);
 }
 
-static void LJ_FASTCALL recff_string_startswith(jit_State *J, RecordFFData *rd)
+static void LJ_FASTCALL recff_string_subeq(jit_State *J, RecordFFData *rd)
 {
   TRef trstr = lj_ir_tostr(J, J->base[0]);
   TRef trpat = lj_ir_tostr(J, J->base[1]);
   TRef trlen = emitir(IRTI(IR_FLOAD), trstr, IRFL_STR_LEN);
   TRef tr0 = lj_ir_kint(J, 0);
-  TRef trstart;
+  TRef trstart, trend;
   GCstr *str = argv2str(J, &rd->argv[0]);
   GCstr *pat = argv2str(J, &rd->argv[1]);
-  int32_t start;
-  J->needsnap = 1;
-  if (tref_isnil(J->base[2])) {
-    trstart = lj_ir_kint(J, 1);
-    start = 1;
+  int32_t start, end;
+  start = argv2int(J, &rd->argv[2]);
+  trstart = lj_opt_narrow_toint(J, J->base[2]);
+  trend = J->base[3];
+  if (tref_isnil(trend)) {
+    trend = lj_ir_kint(J, -1);
+    end = -1;
   } else {
-    trstart = lj_opt_narrow_toint(J, J->base[2]);
-    start = argv2int(J, &rd->argv[2]);
+    trend = lj_opt_narrow_toint(J, trend);
+    end = argv2int(J, &rd->argv[3]);
+  }
+  if (end < 0) {
+    emitir(IRTGI(IR_LT), trend, tr0);
+    trend = emitir(IRTI(IR_ADD), emitir(IRTI(IR_ADD), trlen, trend),
+		   lj_ir_kint(J, 1));
+    end = end+(int32_t)str->len+1;
+  } else if ((MSize)end <= str->len) {
+    emitir(IRTGI(IR_ULE), trend, trlen);
+  } else {
+    emitir(IRTGI(IR_UGT), trend, trlen);
+    end = (int32_t)str->len;
+    trend = trlen;
   }
   trstart = recff_string_start(J, str, &start, trstart, trlen, tr0);
-  if ((MSize)start <= str->len) {
-    emitir(IRTGI(IR_ULE), trstart, trlen);
-  } else {
-    emitir(IRTGI(IR_UGT), trstart, trlen);
-    J->base[0] = TREF_FALSE;
-    return;
-  }
-  TRef trslen = emitir(IRTI(IR_SUB), trlen, trstart);
-  TRef trplen = emitir(IRTI(IR_FLOAD), trpat, IRFL_STR_LEN);
-  if (pat->len <= (str->len - (MSize)start)) {
-    emitir(IRTGI(IR_ULE), trplen, trslen);
-  } else {
-    emitir(IRTGI(IR_UGT), trplen, trslen);
-    J->base[0] = TREF_FALSE;
-    return;
-  } 
-  TRef trsptr = emitir(IRT(IR_STRREF, IRT_PGC), trstr, trstart);
-  TRef trpptr = emitir(IRT(IR_STRREF, IRT_PGC), trpat, tr0);
-  TRef tr = lj_ir_call(J, IRCALL_lj_str_find, trsptr, trpptr, trslen, trplen);
-  TRef trp0 = lj_ir_kkptr(J, NULL);
-  if (lj_str_find(strdata(str)+(MSize)start, strdata(pat),
-	    pat->len, pat->len)) {
-    emitir(IRTG(IR_NE, IRT_PGC), tr, trp0);
-    J->base[0] = TREF_TRUE;
-  } else {
-    emitir(IRTG(IR_EQ, IRT_PGC), tr, trp0);
+  int32_t sublen = end - start;
+  if (sublen >= 0) {
+    /* Also handle empty range here, to avoid extra traces. */
+    TRef trslen = emitir(IRTI(IR_SUB), trend, trstart);
+    emitir(IRTGI(IR_GE), trslen, tr0);
+    TRef trplen = emitir(IRTI(IR_FLOAD), trpat, IRFL_STR_LEN);
+    if ((MSize)sublen >= pat->len) {
+      emitir(IRTGI(IR_UGE), trslen, trplen);   
+      MSize st = (MSize)start;           
+      if (rd->data) { /* endswith (else startswith) */
+        st = (MSize)end - pat->len;
+        trstart = emitir(IRTI(IR_SUB), trend, trplen);         
+      }
+      TRef trsptr = emitir(IRT(IR_STRREF, IRT_PGC), trstr, trstart);
+      TRef trpptr = emitir(IRT(IR_STRREF, IRT_PGC), trpat, tr0);
+      TRef tr = lj_ir_call(J, IRCALL_lj_str_find, trsptr, trpptr, trplen, trplen);
+      TRef trp0 = lj_ir_kkptr(J, NULL);
+      if (lj_str_find(strdata(str)+st, strdata(pat), pat->len, pat->len)) {
+        emitir(IRTG(IR_NE, IRT_PGC), tr, trp0);
+        J->base[0] = TREF_TRUE;
+      } else {
+        emitir(IRTG(IR_EQ, IRT_PGC), tr, trp0);
+        J->base[0] = TREF_FALSE;
+      }
+    } else {
+      emitir(IRTGI(IR_ULT), trslen, trplen);
+      J->base[0] = TREF_FALSE;
+    }
+  } else {  /* Range underflow: return false. */
+    emitir(IRTGI(IR_LT), trend, trstart);
     J->base[0] = TREF_FALSE;
   }
 }

@@ -655,52 +655,46 @@ LJLIB_CF(string_format)		LJLIB_REC(.)
 
 /* ------------------------------------------------------------------------ */
 
-static int str_cmp_aux(lua_State* L, int casesensitive)
+/* Return values of string_cmp and string_casecmp must be adjusted depending 
+ * on whether a->len == b->len so that:
+ *  r   a->len OP b->len   return (r - (a->len < b->len)) | (a->len != b->len)   
+ * ---------------------------------------------------------------------------     
+ * -1          =           (-1 - 0) | 0 = -1
+ * -1          <           (-1 - 1) | 1 = -1
+ * -1          >           (-1 - 0) | 1 = -1
+ *  0          =           ( 0 - 0) | 0 =  0 
+ *  0          <           ( 0 - 1) | 1 = -1
+ *  0          >           ( 0 - 0) | 1 =  1
+ *  1          =           ( 1 - 0) | 0 =  1
+ *  1          <           ( 1 - 1) | 1 =  1
+ *  1          >           ( 1 - 0) | 1 =  1
+ * */
+
+LJLIB_CF(string_cmp)  LJLIB_REC(.)
 {
   GCstr *a = lj_lib_checkstr(L, 1);
   GCstr *b = lj_lib_checkstr(L, 2);
-  MSize i, n = a->len > b->len ? b->len : a->len;
-  int32_t r = 0;
-  if (casesensitive) {
-    for (i = 0; (i < n) && (r == 0); ++i) {
-      const char ca = *(strdata(a) + i);
-      const char cb = *(strdata(b) + i);
-      r = (ca > cb) - (ca < cb);  
-    }
-  } else {
-    for (i = 0; (i < n) && (r == 0); ++i) {
-      char ca = *(strdata(a) + i);
-      ca += ((ca >= 'A' && ca <= 'Z') << 5);
-      char cb = *(strdata(b) + i);
-      cb += ((cb >= 'A' && cb <= 'Z') << 5);
-      r = (ca > cb) - (ca < cb);
-    }
-  }
-  /* Return value must be adjusted depending on whether a->len and b->len
-   *  r   a->len OP b->len   return (r - (a->len < b->len)) | (a->len != b->len)   
-   * --------------------------------------------------------------------------     
-   * -1          =           (-1 - 0) | 0 = -1
-   * -1          <           (-1 - 1) | 1 = -1
-   * -1          >           (-1 - 0) | 1 = -1
-   *  0          =           ( 0 - 0) | 0 =  0 
-   *  0          <           ( 0 - 1) | 1 = -1
-   *  0          >           ( 0 - 0) | 1 =  1
-   *  1          =           ( 1 - 0) | 0 =  1
-   *  1          <           ( 1 - 1) | 1 =  1
-   *  1          >           ( 1 - 0) | 1 =  1
-   * */
+  MSize n = a->len > b->len ? b->len : a->len;
+  const int r = memcmp(strdata(a), strdata(b), (size_t)n);
   setintV(L->top-1, (r - (a->len < b->len)) | (a->len != b->len));
   return 1;
 }
 
-LJLIB_CF(string_cmp)  LJLIB_REC(.)
-{
-  return str_cmp_aux(L, 1);
-}
-
 LJLIB_CF(string_casecmp)  LJLIB_REC(.)
 {
-  return str_cmp_aux(L, 0);
+  GCstr *a = lj_lib_checkstr(L, 1);
+  GCstr *b = lj_lib_checkstr(L, 2);
+  MSize i, n = a->len > b->len ? b->len : a->len;
+  int r = 0;
+  for (i = 0; (i < n) && (r == 0); ++i) {
+    char ca = *(strdata(a) + i);
+    ca += ((ca >= 'A' && ca <= 'Z') << 5);
+    char cb = *(strdata(b) + i);
+    cb += ((cb >= 'A' && cb <= 'Z') << 5);
+    r = (ca > cb) - (ca < cb);
+  }
+  setintV(L->top-1, (r - (a->len < b->len)) | (a->len != b->len));
+  return 1;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -709,26 +703,47 @@ LJLIB_CF(string_collcmp)
 {
   GCstr *a = lj_lib_checkstr(L, 1);
   GCstr *b = lj_lib_checkstr(L, 2);
-  const int32_t r = strcoll(strdata(a), strdata(b));
+  const int r = strcoll(strdata(a), strdata(b));
   setintV(L->top-1, ((r > 0) - (r < 0)));
   return 1;
 }
 
 /* ------------------------------------------------------------------------ */
 
-LJLIB_CF(string_startswith)  LJLIB_REC(.)
+LJLIB_CF(string_startswith)  LJLIB_REC(string_subeq 0)
 {
   GCstr *a = lj_lib_checkstr(L, 1);
   GCstr *b = lj_lib_checkstr(L, 2);
-  int32_t start = lj_lib_optint(L, 3, 1); 
-  MSize st;
+  int32_t start = lj_lib_optint(L, 3, 1);
+  int32_t end = lj_lib_optint(L, 4, -1);
+
   if (start < 0) start += (int32_t)a->len; else start--;
   if (start < 0) start = 0;
-  st = (MSize)start;
-  if (st > a->len || (a->len - st) < b->len) {
-    setboolV(L->top-1, 0);  
+  if (end < 0) end += (int32_t)a->len + 1;
+  else if (end > (int32_t)a->len) end = (int32_t)a->len; 
+  if (start <= end && b->len <= (MSize)(end - start)) {
+    setboolV(L->top - 1, lj_str_find(strdata(a) + (MSize)start, strdata(b), b->len, b->len) != NULL);    
   } else {
-    setboolV(L->top - 1, lj_str_find(strdata(a) + st, strdata(b), b->len, b->len) != NULL);
+    setboolV(L->top-1, 0);
+  }
+  return 1;
+}
+
+LJLIB_CF(string_endswith)  LJLIB_REC(string_subeq 1) 
+{
+  GCstr *a = lj_lib_checkstr(L, 1);
+  GCstr *b = lj_lib_checkstr(L, 2);
+  int32_t start = lj_lib_optint(L, 3, 1);
+  int32_t end = lj_lib_optint(L, 4, -1);
+
+  if (start < 0) start += (int32_t)a->len; else start--;
+  if (start < 0) start = 0;
+  if (end < 0) end += (int32_t)a->len + 1;
+  else if (end > (int32_t)a->len) end = (int32_t)a->len; 
+  if (start <= end && b->len <= (MSize)(end - start)) {
+    setboolV(L->top - 1, lj_str_find(strdata(a) + (MSize)end - b->len, strdata(b), b->len, b->len) != NULL);    
+  } else {
+    setboolV(L->top-1, 0);
   }
   return 1;
 }
