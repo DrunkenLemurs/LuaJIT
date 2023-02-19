@@ -169,6 +169,16 @@ LJLIB_CF(table_concat)		LJLIB_REC(.)
   return 1;
 }
 
+LJLIB_NOREG LJLIB_CF(table_isempty) LJLIB_REC(.)
+{
+  GCtab *src = lj_lib_checktab(L, 1);
+
+  setboolV(L->base, lj_tab_isempty(src));
+  L->top = L->base+1;
+
+  return 1;
+}
+
 /* ------------------------------------------------------------------------ */
 
 static void set2(lua_State *L, int i, int j)
@@ -309,6 +319,11 @@ static int luaopen_table_clear(lua_State *L)
   return lj_lib_postreg(L, lj_cf_table_clear, FF_table_clear, "clear");
 }
 
+static int luaopen_table_isempty(lua_State *L)
+{
+  return lj_lib_postreg(L, lj_cf_table_isempty, FF_table_isempty, "isempty");
+}
+
 /* ------------------------------------------------------------------------ */
 
 #include "lj_libdef.h"
@@ -322,6 +337,7 @@ LUALIB_API int luaopen_table(lua_State *L)
 #endif
   lj_lib_prereg(L, LUA_TABLIBNAME ".new", luaopen_table_new, tabV(L->top-1));
   lj_lib_prereg(L, LUA_TABLIBNAME ".clear", luaopen_table_clear, tabV(L->top-1));
+  lj_lib_prereg(L, LUA_TABLIBNAME ".isempty", luaopen_table_isempty, tabV(L->top-1));  
   return 1;
 }
 
