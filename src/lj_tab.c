@@ -732,11 +732,37 @@ int LJ_FASTCALL lj_tab_isarray(const GCtab *src)
       const lua_Number n = numberVnum(o);
       /* simply checking `rint(n) == n` does not work with 
        * NaN,+inf,-inf or numbers out of int32 range */
-      if (LJ_UNLIKELY(n < INT_MIN)
-        || LJ_UNLIKELY(n > INT_MAX)
-        || LJ_UNLIKELY(lj_num2int(n) != n))
+      if (LJ_UNLIKELY(n < INT_MIN) ||
+          LJ_UNLIKELY(n > INT_MAX) ||
+          LJ_UNLIKELY(lj_num2int(n) != n))
         return 0;
     }
   }
   return 1;
+}
+
+MSize LJ_FASTCALL lj_tab_nkeys(const GCtab *t)
+{
+  MSize narr = (MSize)t->asize;
+  cTValue *e;
+  Node *node;
+  MSize i, cnt = 0;
+
+  e = tvref(t->array);
+  for (i = 0; i < narr; i++)
+    if (LJ_LIKELY(!tvisnil(&e[i])))
+      cnt++;
+
+  if (t->hmask <= 0)
+    return cnt;
+
+  node = noderef(t->node);
+  for (i = 0; i <= (MSize)t->hmask; i++) {
+    Node *n = &node[i];
+    if (LJ_LIKELY(!tvisnil(&n->val))) {
+      cnt++;
+    }
+  }
+
+  return cnt;
 }

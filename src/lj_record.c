@@ -1760,6 +1760,9 @@ static TRef rec_upvalue(jit_State *J, uint32_t uv, TRef val)
       return tr;
   }
 noconstify:
+  #if LJ_MAX_UPVAL > 127
+  #error "LJ_MAX_UPVAL must be < 128"
+  #endif  
   /* Note: this effectively limits LJ_MAX_UPVAL to 127. */
   uv = (uv << 8) | (hashrot(uvp->dhash, uvp->dhash + HASH_BIAS) & 0xff);
   if (!uvp->closed) {

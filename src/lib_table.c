@@ -334,6 +334,18 @@ LJLIB_NOREG LJLIB_CF(table_clear)	LJLIB_REC(.)
   return 0;
 }
 
+LJLIB_NOREG LJLIB_CF(table_nkeys) LJLIB_REC(.)
+{
+  GCtab *src = lj_lib_checktab(L, 1);
+
+  setintV(L->base, lj_tab_nkeys(src));
+  L->top = L->base+1;
+
+  return 1;
+}
+
+/* ------------------------------------------------------------------------ */
+
 static int luaopen_table_new(lua_State *L)
 {
   return lj_lib_postreg(L, lj_cf_table_new, FF_table_new, "new");
@@ -359,6 +371,11 @@ static int luaopen_table_type(lua_State *L)
   return lj_lib_postreg(L, lj_cf_table_type, FF_table_type, "type");
 }
 
+static int luaopen_table_nkeys(lua_State *L)
+{
+  return lj_lib_postreg(L, lj_cf_table_nkeys, FF_table_nkeys, "nkeys");
+}
+
 /* ------------------------------------------------------------------------ */
 
 #include "lj_libdef.h"
@@ -375,6 +392,7 @@ LUALIB_API int luaopen_table(lua_State *L)
   lj_lib_prereg(L, LUA_TABLIBNAME ".empty", luaopen_table_empty, tabV(L->top-1));  
   lj_lib_prereg(L, LUA_TABLIBNAME ".dup", luaopen_table_dup, tabV(L->top-1));
   lj_lib_prereg(L, LUA_TABLIBNAME ".type", luaopen_table_type, tabV(L->top-1));
+  lj_lib_prereg(L, LUA_TABLIBNAME ".nkeys", luaopen_table_nkeys, tabV(L->top-1));
   return 1;
 }
 
