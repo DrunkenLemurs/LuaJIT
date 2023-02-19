@@ -670,7 +670,7 @@ LJLIB_CF(string_format)		LJLIB_REC(.)
  *  1          >           ( 1 - 0) | 1 =  1
  * */
 
-LJLIB_CF(string_cmp)  LJLIB_REC(.)
+LJLIB_NOREG LJLIB_CF(string_cmp)  LJLIB_REC(.)
 {
   GCstr *a = lj_lib_checkstr(L, 1);
   GCstr *b = lj_lib_checkstr(L, 2);
@@ -680,7 +680,7 @@ LJLIB_CF(string_cmp)  LJLIB_REC(.)
   return 1;
 }
 
-LJLIB_CF(string_casecmp)  LJLIB_REC(.)
+LJLIB_NOREG LJLIB_CF(string_casecmp)  LJLIB_REC(.)
 {
   GCstr *a = lj_lib_checkstr(L, 1);
   GCstr *b = lj_lib_checkstr(L, 2);
@@ -699,7 +699,7 @@ LJLIB_CF(string_casecmp)  LJLIB_REC(.)
 
 /* ------------------------------------------------------------------------ */
 
-LJLIB_CF(string_collcmp)
+LJLIB_NOREG LJLIB_CF(string_collcmp)
 {
   GCstr *a = lj_lib_checkstr(L, 1);
   GCstr *b = lj_lib_checkstr(L, 2);
@@ -710,7 +710,7 @@ LJLIB_CF(string_collcmp)
 
 /* ------------------------------------------------------------------------ */
 
-LJLIB_CF(string_startswith)  LJLIB_REC(string_subeq 0)
+LJLIB_NOREG LJLIB_CF(string_startswith)  LJLIB_REC(string_subeq 0)
 {
   GCstr *a = lj_lib_checkstr(L, 1);
   GCstr *b = lj_lib_checkstr(L, 2);
@@ -729,7 +729,7 @@ LJLIB_CF(string_startswith)  LJLIB_REC(string_subeq 0)
   return 1;
 }
 
-LJLIB_CF(string_endswith)  LJLIB_REC(string_subeq 1) 
+LJLIB_NOREG LJLIB_CF(string_endswith)  LJLIB_REC(string_subeq 1) 
 {
   GCstr *a = lj_lib_checkstr(L, 1);
   GCstr *b = lj_lib_checkstr(L, 2);
@@ -750,6 +750,33 @@ LJLIB_CF(string_endswith)  LJLIB_REC(string_subeq 1)
 
 /* ------------------------------------------------------------------------ */
 
+static int luaopen_string_cmp(lua_State *L)
+{
+  return lj_lib_postreg(L, lj_cf_string_cmp, FF_string_cmp, "cmp");
+}
+
+static int luaopen_string_casecmp(lua_State *L)
+{
+  return lj_lib_postreg(L, lj_cf_string_casecmp, FF_string_casecmp, "casecmp");
+}
+
+static int luaopen_string_collcmp(lua_State *L)
+{
+  return lj_lib_postreg(L, lj_cf_string_collcmp, FF_string_collcmp, "collcmp");
+}
+
+static int luaopen_string_startswith(lua_State *L)
+{
+  return lj_lib_postreg(L, lj_cf_string_startswith, FF_string_startswith, "startswith");
+}
+
+static int luaopen_string_endswith(lua_State *L)
+{
+  return lj_lib_postreg(L, lj_cf_string_endswith, FF_string_endswith, "endswith");
+}
+
+/* ------------------------------------------------------------------------ */
+
 #include "lj_libdef.h"
 
 LUALIB_API int luaopen_string(lua_State *L)
@@ -766,6 +793,11 @@ LUALIB_API int luaopen_string(lua_State *L)
 #if LJ_HASBUFFER
   lj_lib_prereg(L, LUA_STRLIBNAME ".buffer", luaopen_string_buffer, tabV(L->top-1));
 #endif
+  lj_lib_prereg(L, LUA_STRLIBNAME ".cmp", luaopen_string_cmp, tabV(L->top-1));
+  lj_lib_prereg(L, LUA_STRLIBNAME ".casecmp", luaopen_string_casecmp, tabV(L->top-1));
+  lj_lib_prereg(L, LUA_STRLIBNAME ".collcmp", luaopen_string_collcmp, tabV(L->top-1));
+  lj_lib_prereg(L, LUA_STRLIBNAME ".startswith", luaopen_string_startswith, tabV(L->top-1));
+  lj_lib_prereg(L, LUA_STRLIBNAME ".endswith", luaopen_string_endswith, tabV(L->top-1));
   return 1;
 }
 
