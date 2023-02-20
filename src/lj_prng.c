@@ -60,15 +60,6 @@ LJ_NOINLINE uint64_t LJ_FASTCALL lj_prng_u64d(PRNGState *rs)
   return (r & U64x(000fffff,ffffffff)) | U64x(3ff00000,00000000);
 }
 
-/* Condition seed: ensure k[i] MSB of u[i] are non-zero. */
-static LJ_AINLINE void lj_prng_condition(PRNGState *rs)
-{
-  if (rs->u[0] < (1u << 1)) rs->u[0] += (1u << 1);
-  if (rs->u[1] < (1u << 6)) rs->u[1] += (1u << 6);
-  if (rs->u[2] < (1u << 9)) rs->u[2] += (1u << 9);
-  if (rs->u[3] < (1u << 17)) rs->u[3] += (1u << 17);
-}
-
 /* -- PRNG seeding from OS ------------------------------------------------ */
 
 #if LUAJIT_SECURITY_PRNG == 0
@@ -161,6 +152,15 @@ int LJ_FASTCALL lj_prng_seed_secure(PRNGState *rs)
 }
 
 #else
+
+/* Condition seed: ensure k[i] MSB of u[i] are non-zero. */
+static LJ_AINLINE void lj_prng_condition(PRNGState *rs)
+{
+  if (rs->u[0] < (1u << 1)) rs->u[0] += (1u << 1);
+  if (rs->u[1] < (1u << 6)) rs->u[1] += (1u << 6);
+  if (rs->u[2] < (1u << 9)) rs->u[2] += (1u << 9);
+  if (rs->u[3] < (1u << 17)) rs->u[3] += (1u << 17);
+}
 
 /* Securely seed PRNG from system entropy. Returns 0 on failure. */
 int LJ_FASTCALL lj_prng_seed_secure(PRNGState *rs)
