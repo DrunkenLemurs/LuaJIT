@@ -184,7 +184,8 @@ LJLIB_CF(math_randomseed)
 {
   PRNGState *rs = (PRNGState *)(uddata(udataV(lj_lib_upvalue(L, 1))));
   if (L->base >= L->top || tvisnil(L->base)) { /* no seed */
-    lj_prng_seed_secure(rs);
+    if (!lj_prng_seed_secure(rs))
+      return luaL_error(L, "PRNG seeding from system entropy failed");
   } else {
     random_seed(rs, lj_lib_checknum(L, 1));
   }
