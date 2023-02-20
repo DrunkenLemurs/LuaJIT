@@ -39,12 +39,18 @@
 #define LUA_LUADIR	"/lua/5.1/"
 #define LUA_LJDIR	"/luajit-2.1.0-beta3/"
 
+#ifdef __APPLE__
+#define LUA_LIBEXT ".dylib"
+#else
+#define LUA_LIBEXT ".so"
+#endif
+
 #ifdef LUA_ROOT
 #define LUA_JROOT	LUA_ROOT
 #define LUA_RLDIR	LUA_ROOT "/share" LUA_LUADIR
 #define LUA_RCDIR	LUA_ROOT "/" LUA_MULTILIB LUA_LUADIR
 #define LUA_RLPATH	";" LUA_RLDIR "?.lua;" LUA_RLDIR "?/init.lua"
-#define LUA_RCPATH	";" LUA_RCDIR "?.so"
+#define LUA_RCPATH	";" LUA_RCDIR "?" LUA_LIBEXT
 #else
 #define LUA_JROOT	LUA_LROOT
 #define LUA_RLPATH
@@ -66,9 +72,9 @@
 #define LUA_LCDIR	LUA_LROOT "/" LUA_LMULTILIB LUA_LUADIR
 #define LUA_XCDIR	LUA_XROOT "/" LUA_LMULTILIB LUA_LUADIR
 #define LUA_LLPATH	";" LUA_LLDIR "?.lua;" LUA_LLDIR "?/init.lua"
-#define LUA_LCPATH0	";" LUA_XCDIR "?.so"
-#define LUA_LCPATH1	";" LUA_LCDIR "?.so"
-#define LUA_LCPATH2	";" LUA_LCDIR "loadall.so"
+#define LUA_LCPATH0	";" LUA_XCDIR "?" LUA_LIBEXT
+#define LUA_LCPATH1	";" LUA_LCDIR "?" LUA_LIBEXT
+#define LUA_LCPATH2	";" LUA_LCDIR "loadall" LUA_LIBEXT
 
 #define LUA_PATH_DEFAULT	LUA_JPATH LUA_LLPATH LUA_RLPATH
 #define LUA_CPATH_DEFAULT	LUA_LCPATH0 LUA_LCPATH1 LUA_RCPATH LUA_LCPATH2
