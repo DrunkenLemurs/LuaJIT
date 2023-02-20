@@ -1340,6 +1340,7 @@ static void build_subroutines(BuildCtx *ctx)
   |
   |  math_round floor, frintm
   |  math_round ceil, frintp
+  |  math_round trunc, frintz
   |
   |.ffunc_1 math_abs
   |  checknumber CARG1, ->fff_fallback

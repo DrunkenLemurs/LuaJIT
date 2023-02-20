@@ -1414,6 +1414,7 @@ static void build_subroutines(BuildCtx *ctx)
   |
   |  math_round floor
   |  math_round ceil
+  |  math_round trunc
   |
   |.align 8
   |9:

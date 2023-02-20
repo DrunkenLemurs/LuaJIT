@@ -2103,10 +2103,12 @@ static void build_subroutines(BuildCtx *ctx)
   |.if DUALNUM
   |  math_round floor
   |  math_round ceil
+  |  math_round trunc
   |.else
   |  // NYI: use internal implementation.
   |  math_extern floor
   |  math_extern ceil
+  |  math_extern trunc
   |.endif
   |
   |.if SQRT

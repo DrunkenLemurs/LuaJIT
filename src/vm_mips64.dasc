@@ -1700,6 +1700,7 @@ static void build_subroutines(BuildCtx *ctx)
   |
   |  math_round floor
   |  math_round ceil
+  |  math_round trunc
   |
   |.ffunc math_log
   |  li AT, 8

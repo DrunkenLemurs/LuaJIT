@@ -28,6 +28,7 @@ LJLIB_ASM(math_abs)		LJLIB_REC(.)
 }
 LJLIB_ASM_(math_floor)		LJLIB_REC(math_round IRFPM_FLOOR)
 LJLIB_ASM_(math_ceil)		LJLIB_REC(math_round IRFPM_CEIL)
+LJLIB_ASM_(math_trunc)		LJLIB_REC(math_round IRFPM_TRUNC)
 
 LJLIB_ASM(math_sqrt)		LJLIB_REC(math_unary IRFPM_SQRT)
 {

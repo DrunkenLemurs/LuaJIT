@@ -1734,6 +1734,7 @@ static void build_subroutines(BuildCtx *ctx)
   |
   |  math_round floor
   |  math_round ceil
+  |  math_round trunc
   |
   |.ffunc math_log
   |  cmp NARGS:RDd, 1+1; jne ->fff_fallback	// Exactly one argument.
