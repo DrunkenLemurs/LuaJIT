@@ -131,7 +131,11 @@ static int docall(lua_State *L, int narg, int clear)
 
 static void print_version(void)
 {
-  fputs(LUAJIT_VERSION " -- " LUAJIT_COPYRIGHT ". " LUAJIT_URL "\n", stdout);
+  fputs(LUAJIT_VERSION
+#ifdef LUAJIT_USE_SYSMALLOC
+    "+sysmalloc"
+#endif        
+    " -- " LUAJIT_COPYRIGHT ". " LUAJIT_URL "\n", stdout);
 }
 
 static void print_jit_status(lua_State *L)
