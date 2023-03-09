@@ -371,7 +371,10 @@ void lj_debug_addloc(lua_State *L, const char *msg,
 	GCproto *pt = funcproto(fn);
 	char buf[LUA_IDSIZE];
 	lj_debug_shortname(buf, proto_chunkname(pt), pt->firstline);
-	lj_strfmt_pushf(L, "%s:%d: %s", buf, line, msg);
+	if (line > 0)
+	  lj_strfmt_pushf(L, "%s:%d: %s", buf, line, msg);
+	else 
+	  lj_strfmt_pushf(L, "%s: %s", buf, msg);
 	return;
       }
     }

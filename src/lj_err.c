@@ -892,7 +892,8 @@ LJ_NOINLINE void lj_err_lex(lua_State *L, GCstr *src, const char *tok,
   const char *msg;
   lj_debug_shortname(buff, src, line);
   msg = lj_strfmt_pushvf(L, err2msg(em), argp);
-  msg = lj_strfmt_pushf(L, "%s:%d: %s", buff, line, msg);
+  msg = line > 0 ? lj_strfmt_pushf(L, "%s:%d: %s", buff, line, msg)
+                 : lj_strfmt_pushf(L, "%s: %s", buff, msg);
   if (tok)
     lj_strfmt_pushf(L, err2msg(LJ_ERR_XNEAR), msg, tok);
   lj_err_throw(L, LUA_ERRSYNTAX);
