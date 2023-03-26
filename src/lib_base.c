@@ -596,9 +596,7 @@ LJLIB_CF(coroutine_isresumable)
   if (!(L->top > L->base && tvisthread(L->base)))
     lj_err_arg(L, 1, LJ_ERR_NOCORO);
   co = threadV(L->base);
-  lua_pushboolean(L, co->cframe == NULL && 
-                     (co->status == LUA_YIELD || 
-                      (co->status == LUA_OK && co->top > co->base)));
+  setboolV(L->top++, lua_isresumable(co));
   return 1;
 }
 
