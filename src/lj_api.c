@@ -1269,6 +1269,15 @@ LUA_API int lua_resume(lua_State *L, int nargs)
   return LUA_ERRRUN;
 }
 
+LUA_API int lua_cancel(lua_State *L)
+{
+  if (L->cframe == NULL && L->status <= LUA_YIELD) {
+    L->status = LUA_ERRRUN;
+    return LUA_OK;
+  }  
+  return LUA_ERRRUN;
+}
+
 /* -- GC and memory management -------------------------------------------- */
 
 LUA_API int lua_gc(lua_State *L, int what, int data)

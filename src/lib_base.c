@@ -618,6 +618,21 @@ LJLIB_ASM(coroutine_yield)
   return FFH_UNREACHABLE;
 }
 
+LJLIB_CF(coroutine_cancel)
+{
+  lua_State *co;
+  if (!(L->top > L->base && tvisthread(L->base)))
+    lj_err_arg(L, 1, LJ_ERR_NOCORO);
+  co = threadV(L->base);
+  if (lua_isresumable(co)) {
+      co->status = LUA_ERRRUN;
+      setboolV(L->top++, 1);
+  } else {
+    setboolV(L->top++, 0);
+  }
+  return 1;
+}
+
 static int ffh_resume(lua_State *L, lua_State *co, int wrap)
 {
   ErrMsg em;
