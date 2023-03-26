@@ -1209,6 +1209,13 @@ LUA_API int lua_isyieldable(lua_State *L)
   return cframe_canyield(L->cframe);
 }
 
+LUA_API int lua_isresumable(lua_State *L)
+{
+  return L->cframe == NULL && 
+         (L->status == LUA_YIELD || 
+          (L->status == LUA_OK && L->top > L->base));  
+}
+
 LUA_API int lua_yield(lua_State *L, int nresults)
 {
   void *cf = L->cframe;

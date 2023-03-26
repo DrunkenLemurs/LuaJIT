@@ -590,6 +590,18 @@ LJLIB_CF(coroutine_isyieldable)
   return 1;
 }
 
+LJLIB_CF(coroutine_isresumable)
+{
+  lua_State *co;
+  if (!(L->top > L->base && tvisthread(L->base)))
+    lj_err_arg(L, 1, LJ_ERR_NOCORO);
+  co = threadV(L->base);
+  lua_pushboolean(L, co->cframe == NULL && 
+                     (co->status == LUA_YIELD || 
+                      (co->status == LUA_OK && co->top > co->base)));
+  return 1;
+}
+
 LJLIB_CF(coroutine_create)
 {
   lua_State *L1;
