@@ -620,16 +620,22 @@ LJLIB_ASM(coroutine_yield)
 
 static int ffh_resume(lua_State *L, lua_State *co, int wrap)
 {
-  if (co->cframe != NULL || co->status > LUA_YIELD ||
-      (co->status == LUA_OK && co->top == co->base)) {
-    ErrMsg em = co->cframe ? LJ_ERR_CORUN : LJ_ERR_CODEAD;
-    if (wrap) lj_err_caller(L, em);
-    setboolV(L->base-1-LJ_FR2, 0);
-    setstrV(L, L->base-LJ_FR2, lj_err_str(L, em));
-    return FFH_RES(2);
+  ErrMsg em;
+  if (co->cframe != NULL) {
+    em = LJ_ERR_CORUN;
+  } else if (co->status > LUA_YIELD ||
+             (co->status == LUA_OK && co->top == co->base)) {
+    em = LJ_ERR_CODEAD;
+  } else {
+    /* can resume */
+    lj_state_growstack(co, (MSize)(L->top - L->base));
+    return FFH_RETRY;
   }
-  lj_state_growstack(co, (MSize)(L->top - L->base));
-  return FFH_RETRY;
+  /* cannot resume */
+  if (wrap) lj_err_caller(L, em);
+  setboolV(L->base-1-LJ_FR2, 0);
+  setstrV(L, L->base-LJ_FR2, lj_err_str(L, em));
+  return FFH_RES(2);
 }
 
 LJLIB_ASM(coroutine_resume)
