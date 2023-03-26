@@ -355,6 +355,7 @@ LUA_API lua_Integer lua_tointegerx (lua_State *L, int idx, int *isnum);
 
 /* From Lua 5.3. */
 LUA_API int lua_isyieldable (lua_State *L);
+LUA_API int lua_absindex(lua_State* L, int idx);
 
 
 struct lua_Debug {
