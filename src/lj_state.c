@@ -114,9 +114,6 @@ void LJ_FASTCALL lj_state_growstack(lua_State *L, MSize need)
       n = LJ_STACK_MAX;
   }
   resizestack(L, n);
-  /* last stack slot must be reserved for a potential error msg handler 
-   * invoked by by xpcall or we will always have a LUA_ERRERR triggered 
-   * after a stack overflow */
   if (L->stacksize >= LJ_STACK_MAXEX)
     lj_err_msg(L, LJ_ERR_STKOV);
 }
