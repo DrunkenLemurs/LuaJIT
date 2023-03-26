@@ -538,6 +538,15 @@ LUALIB_API const char *luaL_checklstring(lua_State *L, int idx, size_t *len)
   return strdata(s);
 }
 
+LUALIB_API const char *luaL_checkestring(lua_State *L, int idx, 
+				        const char **end)
+{
+    size_t len;
+    const char* s = luaL_checklstring(L, idx, &len);
+    if (*end != NULL) *end = s + len;
+    return s;   
+}
+
 LUALIB_API const char *luaL_optlstring(lua_State *L, int idx,
 				       const char *def, size_t *len)
 {
